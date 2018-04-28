@@ -1,0 +1,1 @@
+trait Job: Send + Sync {}

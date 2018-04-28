@@ -36,9 +36,26 @@ fn main() {
 
     let mut scene = Scene::new(camera_for_time(aspect_ratio, start_time.elapsed()), graph);
 
+    let seq_start = Instant::now();
+    for _ in 0..100 {
+        scene.render_into(&mut framebuffer);
+    }
+    let par_start = Instant::now();
+    for _ in 0..100 {
+        scene.render_into_par(&mut framebuffer);
+    }
+    let end = Instant::now();
+
+    let seq_time = par_start - seq_start;
+    let par_time = end - par_start;
+
+    println!("====");
+    println!("SEQ: {:?}", seq_time);
+    println!("PAR: {:?}", par_time);
+
     while window.is_open() && !window.is_key_down(Key::Escape) {
         scene.set_camera(camera_for_time(aspect_ratio, start_time.elapsed()));
-        scene.render_into(&mut framebuffer);
+        scene.render_into_par(&mut framebuffer);
         window.update_with_buffer(framebuffer.raw_buffer()).unwrap();
     }
 }

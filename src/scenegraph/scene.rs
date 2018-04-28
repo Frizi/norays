@@ -15,14 +15,6 @@ where
     _float: PhantomData<F>,
 }
 
-unsafe impl<F, T, C> Sync for Scene<F, T, C>
-where
-    F: Float,
-    T: Traceable<F>,
-    C: Camera<F>,
-{
-}
-
 impl<F, T, C> Scene<F, T, C>
 where
     F: Float,
@@ -42,6 +34,22 @@ where
     }
 
     pub fn render_into(&self, framebuffer: &mut Framebuffer) {
+        framebuffer.fill(|p| {
+            let ray = self.camera.screen_ray(&p);
+            self.traceable
+                .trace(&ray)
+                .map_or(PURPLE, |hit| (&hit.normal).into())
+        })
+    }
+}
+
+impl<F, T, C> Scene<F, T, C>
+where
+    F: Float,
+    T: Traceable<F> + Sync,
+    C: Camera<F> + Sync,
+{
+    pub fn render_into_par(&self, framebuffer: &mut Framebuffer) {
         framebuffer.par_fill(|p| {
             let ray = self.camera.screen_ray(&p);
             self.traceable
