@@ -15,6 +15,14 @@ where
     _float: PhantomData<F>,
 }
 
+unsafe impl<F, T, C> Sync for Scene<F, T, C>
+where
+    F: Float,
+    T: Traceable<F>,
+    C: Camera<F>,
+{
+}
+
 impl<F, T, C> Scene<F, T, C>
 where
     F: Float,
@@ -34,7 +42,7 @@ where
     }
 
     pub fn render_into(&self, framebuffer: &mut Framebuffer) {
-        framebuffer.fill(|p| {
+        framebuffer.par_fill(|p| {
             let ray = self.camera.screen_ray(&p);
             self.traceable
                 .trace(&ray)

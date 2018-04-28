@@ -1,5 +1,6 @@
 use drawing::Color;
 use math::{Float, Point2D};
+use rayon::prelude::*;
 
 pub struct Framebuffer {
     buffer: Vec<u32>,
@@ -30,6 +31,23 @@ impl Framebuffer {
             );
             *i = func(point).as_rgb_u32();
         }
+    }
+
+    pub fn par_fill<F, Func>(&mut self, func: Func)
+    where
+        F: Float,
+        Func: Fn(Point2D<F>) -> Color + Sync,
+    {
+        let (w, h) = (self.width, self.height);
+        self.buffer.par_iter_mut().enumerate().for_each(|(n, i)| {
+            let (x, y) = (n % w, n / w);
+            let point = Point2D::new(
+                // conversion from int to float will never fail
+                F::from(x).unwrap() / F::from(w).unwrap(),
+                F::from(y).unwrap() / F::from(h).unwrap(),
+            );
+            *i = func(point).as_rgb_u32();
+        })
     }
 
     pub fn raw_buffer(&self) -> &Vec<u32> {
