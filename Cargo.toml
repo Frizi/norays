@@ -1,0 +1,8 @@
+[package]
+name = "norays"
+version = "0.1.0"
+authors = ["Frizi <frizi09@gmail.com>"]
+
+[dependencies]
+minifb = "*"
+num-traits = "0.2"
