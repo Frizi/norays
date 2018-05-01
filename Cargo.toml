@@ -6,4 +6,7 @@ authors = ["Frizi <frizi09@gmail.com>"]
 [dependencies]
 minifb = "*"
 num-traits = "0.2"
-rayon = "1.0"
+fibers = "0.1"
+futures = "0.1"
+nbchan = "0.1"
+lazy_static = "1.0"

@@ -17,6 +17,6 @@ impl<F: Float> Ray<F> {
     }
 
     pub fn point_at_distance(&self, t: F) -> Point<F> {
-        &self.origin + &self.direction * t
+        self.origin + self.direction * t
     }
 }

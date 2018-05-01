@@ -1,6 +1,6 @@
 use math::{Float, Ray};
 
-pub trait BoundingVolume<F: Float>: Clone {
+pub trait BoundingVolume<F: Float>: Clone + Copy {
     fn combine(&self, rhs: &Self) -> Self;
     fn estimated_volume(&self) -> F;
     fn test(&self, against: &Ray<F>) -> bool;

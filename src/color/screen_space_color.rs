@@ -1,25 +1,27 @@
 use math::{Float, Vector};
 
-#[derive(Debug)]
-pub struct Color {
+#[derive(Debug, Copy, Clone)]
+pub struct ScreenSpaceColor {
     pub r: u8,
     pub g: u8,
     pub b: u8,
+    pub a: u8,
 }
 
 pub mod const_color {
     use super::*;
 
-    pub const PURPLE: Color = Color {
+    pub const PURPLE: ScreenSpaceColor = ScreenSpaceColor {
         r: 255,
         g: 0,
         b: 255,
+        a: 255,
     };
 }
 
-impl Color {
-    pub fn rgb(r: u8, g: u8, b: u8) -> Color {
-        Color { r, g, b }
+impl ScreenSpaceColor {
+    pub fn rgb(r: u8, g: u8, b: u8) -> Self {
+        Self { r, g, b, a: 255 }
     }
 
     pub fn as_rgb_u32(&self) -> u32 {
@@ -27,13 +29,9 @@ impl Color {
     }
 }
 
-impl<'a, F: Float> Into<Color> for &'a Vector<F> {
-    fn into(self) -> Color {
-        Color {
-            r: unit_to_u8(self.x),
-            g: unit_to_u8(self.y),
-            b: unit_to_u8(self.z),
-        }
+impl<F: Float> Into<ScreenSpaceColor> for Vector<F> {
+    fn into(self) -> ScreenSpaceColor {
+        ScreenSpaceColor::rgb(unit_to_u8(self.x), unit_to_u8(self.y), unit_to_u8(self.z))
     }
 }
 

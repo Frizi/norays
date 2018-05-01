@@ -1,6 +1,12 @@
 use math::{Float, Ray};
-use tracing::Hit;
+use shading::Material;
+use tracing::Hitable;
 
-pub trait Traceable<F: Float> {
-    fn trace(&self, ray: &Ray<F>) -> Option<Hit<F>>;
+pub trait Traceable<F, H, M>
+where
+    F: Float,
+    H: Hitable<F, Material = M>,
+    M: Material<F>,
+{
+    fn trace(&self, ray: &Ray<F>) -> Option<(F, &H)>;
 }

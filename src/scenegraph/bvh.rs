@@ -1,17 +1,34 @@
 use math::{Bounded, BoundingVolume, BoundingVolumeSum, Float, Ray};
 use scenegraph::{BvhLeaf, BvhNode};
+use shading::Material;
 use std::cmp::Ordering::Equal;
 use std::marker::PhantomData;
-use tracing::{Hit, Traceable};
+use tracing::{Hitable, Traceable};
 
-pub struct Bvh<F: Float, B: BoundingVolume<F>, L: BvhLeaf<F, B>> {
+pub struct Bvh<F, B, H, M, L>
+where
+    F: Float,
+    B: BoundingVolume<F>,
+    H: Hitable<F, Material = M>,
+    M: Material<F>,
+    L: BvhLeaf<F, B, H, M>,
+{
     bound: B,
-    children: Vec<BvhNode<F, B, L>>,
-    _float: PhantomData<F>,
+    children: Vec<BvhNode<F, B, H, M, L>>,
+    _f: PhantomData<F>,
+    _h: PhantomData<H>,
+    _m: PhantomData<M>,
 }
 
-impl<F: Float, B: BoundingVolume<F>, L: BvhLeaf<F, B>> Bvh<F, B, L> {
-    pub fn from_nodes(children: Vec<BvhNode<F, B, L>>) -> Option<Self> {
+impl<F, B, H, M, L> Bvh<F, B, H, M, L>
+where
+    F: Float,
+    B: BoundingVolume<F>,
+    H: Hitable<F, Material = M>,
+    M: Material<F>,
+    L: BvhLeaf<F, B, H, M>,
+{
+    pub fn from_nodes(children: Vec<BvhNode<F, B, H, M, L>>) -> Option<Self> {
         children
             .iter()
             .map(|node| node.bounding_volume())
@@ -19,26 +36,42 @@ impl<F: Float, B: BoundingVolume<F>, L: BvhLeaf<F, B>> Bvh<F, B, L> {
             .map(|bound| Self {
                 bound,
                 children,
-                _float: PhantomData,
+                _f: PhantomData,
+                _h: PhantomData,
+                _m: PhantomData,
             })
     }
 }
 
-impl<F: Float, B: BoundingVolume<F>, L: BvhLeaf<F, B>> Bounded<F, B> for Bvh<F, B, L> {
+impl<F, B, H, M, L> Bounded<F, B> for Bvh<F, B, H, M, L>
+where
+    F: Float,
+    B: BoundingVolume<F>,
+    H: Hitable<F, Material = M>,
+    M: Material<F>,
+    L: BvhLeaf<F, B, H, M>,
+{
     fn bounding_volume(&self) -> B {
-        self.bound.clone()
+        self.bound
     }
 }
 
-impl<F: Float, B: BoundingVolume<F>, L: BvhLeaf<F, B>> Traceable<F> for Bvh<F, B, L> {
-    fn trace(&self, ray: &Ray<F>) -> Option<Hit<F>> {
+impl<F, B, H, M, L> Traceable<F, H, M> for Bvh<F, B, H, M, L>
+where
+    F: Float,
+    B: BoundingVolume<F>,
+    H: Hitable<F, Material = M>,
+    M: Material<F>,
+    L: BvhLeaf<F, B, H, M>,
+{
+    fn trace(&self, ray: &Ray<F>) -> Option<(F, &H)> {
         if !&self.bounding_volume().test(ray) {
             None
         } else {
             self.children
                 .iter()
                 .filter_map(|node| node.trace(&ray))
-                .min_by(|a, b| a.distance.partial_cmp(&b.distance).unwrap_or(Equal))
+                .min_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Equal))
         }
     }
 }

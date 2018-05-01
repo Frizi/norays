@@ -1,21 +1,47 @@
 use math::{Bounded, BoundingVolume, Float, Ray};
 use scenegraph::Bvh;
-use tracing::{Hit, Traceable};
+use shading::Material;
+use tracing::{Hitable, Traceable};
 
-pub trait BvhLeaf<F: Float, B: BoundingVolume<F>>: Bounded<F, B> + Traceable<F> {}
-
-impl<T, F: Float, B: BoundingVolume<F>> BvhLeaf<F, B> for T
+pub trait BvhLeaf<F, B, H, M>: Bounded<F, B> + Traceable<F, H, M>
 where
-    T: Bounded<F, B> + Traceable<F>,
+    F: Float,
+    B: BoundingVolume<F>,
+    H: Hitable<F, Material = M>,
+    M: Material<F>,
 {
 }
 
-pub enum BvhNode<F: Float, B: BoundingVolume<F>, L: BvhLeaf<F, B>> {
-    Node(Bvh<F, B, L>),
+impl<T, F, B, H, M> BvhLeaf<F, B, H, M> for T
+where
+    T: Bounded<F, B> + Traceable<F, H, M>,
+    F: Float,
+    B: BoundingVolume<F>,
+    H: Hitable<F, Material = M>,
+    M: Material<F>,
+{
+}
+
+pub enum BvhNode<F, B, H, M, L>
+where
+    F: Float,
+    B: BoundingVolume<F>,
+    H: Hitable<F, Material = M>,
+    M: Material<F>,
+    L: BvhLeaf<F, B, H, M>,
+{
+    Node(Bvh<F, B, H, M, L>),
     Leaf(L),
 }
 
-impl<F: Float, B: BoundingVolume<F>, L: BvhLeaf<F, B>> Bounded<F, B> for BvhNode<F, B, L> {
+impl<F, B, H, M, L> Bounded<F, B> for BvhNode<F, B, H, M, L>
+where
+    F: Float,
+    B: BoundingVolume<F>,
+    H: Hitable<F, Material = M>,
+    M: Material<F>,
+    L: BvhLeaf<F, B, H, M>,
+{
     fn bounding_volume(&self) -> B {
         match self {
             BvhNode::Node(n) => n.bounding_volume(),
@@ -24,8 +50,15 @@ impl<F: Float, B: BoundingVolume<F>, L: BvhLeaf<F, B>> Bounded<F, B> for BvhNode
     }
 }
 
-impl<F: Float, B: BoundingVolume<F>, L: BvhLeaf<F, B>> Traceable<F> for BvhNode<F, B, L> {
-    fn trace(&self, ray: &Ray<F>) -> Option<Hit<F>> {
+impl<F, B, H, M, L> Traceable<F, H, M> for BvhNode<F, B, H, M, L>
+where
+    F: Float,
+    B: BoundingVolume<F>,
+    H: Hitable<F, Material = M>,
+    M: Material<F>,
+    L: BvhLeaf<F, B, H, M>,
+{
+    fn trace(&self, ray: &Ray<F>) -> Option<(F, &H)> {
         match self {
             BvhNode::Node(n) => n.trace(ray),
             BvhNode::Leaf(n) => n.trace(ray),

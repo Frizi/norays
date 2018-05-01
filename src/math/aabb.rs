@@ -1,6 +1,6 @@
 use math::{BoundingVolume, Float, Point, Ray};
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Aabb<F: Float> {
     pub x_min: F,
     pub x_max: F,
